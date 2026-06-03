@@ -1,16 +1,49 @@
+
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "strict": true,
-    "esModuleInterop": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "types": ["node"]
+  "name": "@yoseph-ai/hedera-verify-mcp",
+  "version": "1.0.0",
+  "description": "MCP server to verify and timestamp document hashes on Hedera mainnet",
+  "type": "module",
+  "main": "dist/main.js",
+  "bin": {
+    "hedera-verify-mcp": "./dist/main.js"
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "scripts": {
+    "build": "tsc",
+    "prepublishOnly": "npm run build",
+    "start": "node dist/main.js",
+    "dev": "tsx src/main.ts"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "hedera",
+    "mcp",
+    "verification",
+    "timestamp",
+    "hcs"
+  ],
+  "author": "Yoseph-ai <yoseph.shibeshi@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Yoseph-ai/hedera-verify-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Yoseph-ai/hedera-verify-mcp/issues"
+  },
+  "homepage": "https://github.com/Yoseph-ai/hedera-verify-mcp#readme",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "dotenv": "^17.4.2",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.9.1",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3"
+  }
 }
