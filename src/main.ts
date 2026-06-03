@@ -23,56 +23,66 @@ server.tool(
   'Verify a document hash on Hedera mainnet',
   { hash: z.string() },
   async ({ hash }) => {
-    // Debug logs (will appear in Inspector terminal)
-    console.error(`[MCP] Verifying hash: ${hash}`);
-    console.error(`[MCP] API_BASE: ${API_BASE}`);
-    console.error(`[MCP] API_KEY length: ${API_KEY.length}`);
-
-    const url = `${API_BASE}/api/agent/verify`;
-    const body = JSON.stringify({ hash, apiKey: API_KEY });
-
-    console.error(`[MCP] Request URL: ${url}`);
-    console.error(`[MCP] Request body length: ${body.length}`);
-
     try {
-      const res = await fetch(url, {
+      const res = await fetch(`${API_BASE}/api/agent/verify`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body,
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': API_KEY,
+        },
+        body: JSON.stringify({ hash }),
       });
-
-      console.error(`[MCP] Response status: ${res.status}`);
-
+      const text = await res.text();
       if (!res.ok) {
-        const errorText = await res.text();
-        console.error(`[MCP] Error body: ${errorText}`);
-        return {
-          content: [{ type: 'text', text: `API error: ${res.status} ${errorText}` }],
-          isError: true,
-        };
+        return { content: [{ type: 'text', text: `API error (${res.status}): ${text}` }], isError: true };
       }
-
-      const data = await res.json();
-      console.error(`[MCP] Response data: valid=${data.valid}`);
-
+      const data = JSON.parse(text);
       if (data.valid) {
         return {
           content: [{
             type: 'text',
-            text: `✅ Verified.\nTimestamp: ${data.timestamp}\nCertificate ID: ${data.certificateId}`
+            text: `✅ Verified.\nTimestamp: ${data.timestamp}\nCertificate ID: ${data.certificateId}`,
           }],
         };
       } else {
-        return {
-          content: [{ type: 'text', text: '❌ Hash not found on ledger.' }],
-        };
+        return { content: [{ type: 'text', text: '❌ Hash not found on ledger.' }] };
       }
     } catch (err) {
-      console.error(`[MCP] Fetch error: ${err.message}`);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      return { content: [{ type: 'text', text: `Fetch failed: ${errorMessage}` }], isError: true };
+    }
+  }
+);
+
+server.tool(
+  'timestamp_document_hash',
+  'Record a document hash on Hedera mainnet (anchor it)',
+  { hash: z.string() },
+  async ({ hash }) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/agent/anchor`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': API_KEY,
+        },
+        body: JSON.stringify({ hash }),
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        return { content: [{ type: 'text', text: `Anchor error (${res.status}): ${text}` }], isError: true };
+      }
+      const data = JSON.parse(text);
+      const seqNum = typeof data.sequenceNumber === 'object' ? data.sequenceNumber.low : data.sequenceNumber;
       return {
-        content: [{ type: 'text', text: `Fetch failed: ${err.message}` }],
-        isError: true,
+        content: [{
+          type: 'text',
+          text: `✅ Hash anchored.\nSequence number: ${seqNum}\nTimestamp: ${data.consensusTimestamp}\nCertificate ID: ${data.certificateId}`,
+        }],
       };
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      return { content: [{ type: 'text', text: `Fetch failed: ${errorMessage}` }], isError: true };
     }
   }
 );
