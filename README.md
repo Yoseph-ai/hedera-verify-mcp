@@ -134,8 +134,6 @@ Find your config file:
 | **macOS**   | `~/Library/Application Support/Claude/claude_desktop_config.json`   |
 | **Linux**   | `~/.config/claude/claude_desktop_config.json`                        |
 
-### macOS / Linux
-
 Add the following block to your config:
 
 ```json
@@ -144,33 +142,6 @@ Add the following block to your config:
     "hedera-verify": {
       "command": "npx",
       "args": ["-y", "@yoseph-ai/hedera-verify-mcp"],
-      "env": {
-        "TRUSTANCHOR_API_URL": "https://hedera-document-auth.vercel.app",
-        "TRUSTANCHOR_API_KEY": "your-api-key-here"
-      }
-    }
-  }
-}
-```
-
-### Windows
-
-Due to a Windows npm limitation, first install the package globally:
-
-```bash
-npm install -g @yoseph-ai/hedera-verify-mcp
-```
-
-Then add the following to your config, replacing `<username>` with your Windows username:
-
-```json
-{
-  "mcpServers": {
-    "hedera-verify": {
-      "command": "node",
-      "args": [
-        "C:\\Users\\<username>\\AppData\\Roaming\\npm\\node_modules\\@yoseph-ai\\hedera-verify-mcp\\dist\\main.js"
-      ],
       "env": {
         "TRUSTANCHOR_API_URL": "https://hedera-document-auth.vercel.app",
         "TRUSTANCHOR_API_KEY": "your-api-key-here"
