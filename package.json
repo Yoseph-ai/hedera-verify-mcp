@@ -1,6 +1,6 @@
 {
   "name": "@yoseph-ai/hedera-verify-mcp",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "MCP server to verify and timestamp document hashes on Hedera mainnet",
   "type": "module",
   "main": "dist/main.js",
@@ -46,12 +46,12 @@
   "homepage": "https://github.com/Yoseph-ai/hedera-verify-mcp#readme",
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
+    "dotenv": "^17.4.2",
         "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/node": "^25.9.1",
-    "dotenv": "^17.4.2",
-    "tsx": "^4.22.4",
+        "tsx": "^4.22.4",
     "typescript": "^6.0.3"
   }
 }
