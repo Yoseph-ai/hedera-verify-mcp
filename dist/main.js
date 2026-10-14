@@ -12,9 +12,9 @@ if (!API_BASE || !API_KEY) {
 }
 const server = new McpServer({
     name: 'hedera-verify-mcp',
-    version: '1.0.0',
+    version: '1.0.5',
 });
-server.tool('verify_document_hash', 'Verify a document hash on Hedera mainnet', { hash: z.string() }, async ({ hash }) => {
+server.tool('verify_document_hash', 'Verify a document hash on Hedera mainnet', { hash: z.string().describe('SHA-256 hash of the document (64 hex characters)') }, async ({ hash }) => {
     try {
         const res = await fetch(`${API_BASE}/api/agent/verify`, {
             method: 'POST',
@@ -46,7 +46,10 @@ server.tool('verify_document_hash', 'Verify a document hash on Hedera mainnet', 
         return { content: [{ type: 'text', text: `Fetch failed: ${errorMessage}` }], isError: true };
     }
 });
-server.tool('timestamp_document_hash', 'Record a document hash on Hedera mainnet (anchor it)', { hash: z.string() }, async ({ hash }) => {
+server.tool('timestamp_document_hash', 'Record a document hash on Hedera mainnet (anchor it). If the hash is already anchored, returns the existing certificate unless force is true.', {
+    hash: z.string().describe('SHA-256 hash of the document (64 hex characters)'),
+    force: z.boolean().optional().describe('Anchor again even if the hash already exists. Default: false'),
+}, async ({ hash, force }) => {
     try {
         const res = await fetch(`${API_BASE}/api/agent/anchor`, {
             method: 'POST',
@@ -54,7 +57,7 @@ server.tool('timestamp_document_hash', 'Record a document hash on Hedera mainnet
                 'Content-Type': 'application/json',
                 'x-api-key': API_KEY,
             },
-            body: JSON.stringify({ hash }),
+            body: JSON.stringify({ hash, force: force ?? false }),
         });
         const text = await res.text();
         if (!res.ok) {
@@ -62,6 +65,14 @@ server.tool('timestamp_document_hash', 'Record a document hash on Hedera mainnet
         }
         const data = JSON.parse(text);
         const seqNum = typeof data.sequenceNumber === 'object' ? data.sequenceNumber.low : data.sequenceNumber;
+        if (data.duplicate) {
+            return {
+                content: [{
+                        type: 'text',
+                        text: `ℹ️ Already anchored — returning existing certificate.\nSequence number: ${seqNum}\nTimestamp: ${data.consensusTimestamp}\nCertificate ID: ${data.certificateId}`,
+                    }],
+            };
+        }
         return {
             content: [{
                     type: 'text',
