@@ -121,6 +121,8 @@ npm run dev
 |-----------------------|----------|------------------------------------------------------------------|
 | `TRUSTANCHOR_API_URL` | ✅        | Backend API URL (default: `https://hedera-document-auth.vercel.app`) |
 | `TRUSTANCHOR_API_KEY` | ✅        | Your API key for the TrustAnchor backend                         |
+| `MCP_AUTH_TOKEN`      | HTTP only | Bearer token clients must send to `/mcp`. The HTTP server won't start without it |
+| `PORT`                | ❌        | HTTP server port (default: `3000`). Most hosts set this for you  |
 
 ---
 
@@ -179,6 +181,68 @@ Add to your Cursor MCP config (`%APPDATA%\Cursor\User\globalStorage\mcp.json` on
 ## Windsurf / Other MCP Clients
 
 Any MCP-compatible client that supports stdio transport can use this server with the same config pattern above. Point `command` at `npx` and pass `["-y", "@yoseph-ai/hedera-verify-mcp"]` as args.
+
+---
+
+## Self-Hosting over HTTP
+
+You can also host the server so clients connect to `https://your-host/mcp` instead of running it locally. It uses the MCP Streamable HTTP transport in stateless mode.
+
+> ⚠️ `timestamp_document_hash` writes to Hedera mainnet using your TrustAnchor API key, so `MCP_AUTH_TOKEN` is required. Everyone with the token shares that key, so only give it to clients you trust.
+
+### Run locally
+
+```bash
+npm install
+cp .env.example .env
+# Set TRUSTANCHOR_API_KEY and MCP_AUTH_TOKEN in .env
+npm run build
+node dist/http.js
+```
+
+The server listens on `http://localhost:3000/mcp`.
+
+### Run with Docker
+
+```bash
+docker build -t hedera-verify-mcp .
+docker run -p 3000:3000 \
+  -e TRUSTANCHOR_API_URL=https://hedera-document-auth.vercel.app \
+  -e TRUSTANCHOR_API_KEY=your-api-key-here \
+  -e MCP_AUTH_TOKEN=your-random-token-here \
+  hedera-verify-mcp
+```
+
+### Deploy
+
+Deploy the `Dockerfile` to any container host, such as Render, Fly.io, Railway or Cloud Run:
+
+1. Generate a token with `openssl rand -hex 32`.
+2. Set `TRUSTANCHOR_API_URL`, `TRUSTANCHOR_API_KEY` and `MCP_AUTH_TOKEN` in the host's environment settings.
+3. Set the host's health check path to `/health`.
+4. Serve it over HTTPS, so the token isn't sent in plain text.
+
+### Test the endpoint
+
+```bash
+curl -X POST https://your-host/mcp \
+  -H "Authorization: Bearer $MCP_AUTH_TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -H "MCP-Protocol-Version: 2025-06-18" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+This should list both tools. Without the `Authorization` header, it returns `401`.
+
+### Connect a client
+
+Clients must be able to send a custom `Authorization` header. For Claude Code:
+
+```bash
+claude mcp add --transport http hedera-verify https://your-host/mcp \
+  --header "Authorization: Bearer your-random-token-here"
+```
 
 ---
 
